@@ -2011,7 +2011,7 @@ pub mod string_or_float {
     }
 }
 
-pub(crate) mod string_or_float_opt {
+pub mod string_or_float_opt {
     use std::fmt;
 
     use serde::{Deserializer, Serializer};
