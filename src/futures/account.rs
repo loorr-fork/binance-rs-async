@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 
-use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order, OrderType,
-                        Position, PositionSide, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order, OrderResponse, OrderType, Position, PositionSide, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
@@ -69,6 +68,7 @@ pub struct OrderRequest {
     #[serde(serialize_with = "serialize_opt_as_uppercase")]
     pub price_protect: Option<bool>,
     pub new_client_order_id: Option<String>,
+    pub new_order_resp_type: Option<OrderResponse>,
 }
 
 #[derive(Serialize)]
@@ -113,6 +113,7 @@ impl FuturesAccount {
         qty: impl Into<f64>,
         price: f64,
         time_in_force: TimeInForce,
+        new_client_order_id: Option<String>,
     ) -> Result<Transaction> {
         let order = OrderRequest {
             symbol: symbol.into(),
@@ -129,7 +130,8 @@ impl FuturesAccount {
             callback_rate: None,
             working_type: None,
             price_protect: None,
-            new_client_order_id: None,
+            new_client_order_id,
+            new_order_resp_type: Some(OrderResponse::Ack)
         };
         self.place_order(order).await
     }
@@ -141,6 +143,7 @@ impl FuturesAccount {
         qty: impl Into<f64>,
         price: f64,
         time_in_force: TimeInForce,
+        new_client_order_id: Option<String>,
     ) -> Result<Transaction> {
         let order = OrderRequest {
             symbol: symbol.into(),
@@ -157,7 +160,8 @@ impl FuturesAccount {
             callback_rate: None,
             working_type: None,
             price_protect: None,
-            new_client_order_id: None,
+            new_client_order_id,
+            new_order_resp_type: Some(OrderResponse::Ack)
         };
         self.place_order(order).await
     }
@@ -184,6 +188,7 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
             new_client_order_id: None,
+            new_order_resp_type: Some(OrderResponse::Result)
         };
         self.place_order(order).await
     }
@@ -210,6 +215,7 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
             new_client_order_id: None,
+            new_order_resp_type: Some(OrderResponse::Result)
         };
         self.place_order(order).await
     }

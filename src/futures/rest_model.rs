@@ -114,22 +114,22 @@ pub enum Filters {
     #[serde(rename = "PRICE_FILTER")]
     #[serde(rename_all = "camelCase")]
     PriceFilter {
-        #[serde(with = "string_or_float")]
-        min_price: f64,
-        #[serde(with = "string_or_float")]
-        max_price: f64,
-        #[serde(with = "string_or_float")]
-        tick_size: f64,
+        // #[serde(with = "string_or_float")]
+        min_price: String,
+        // #[serde(with = "string_or_float")]
+        max_price: String,
+        // #[serde(with = "string_or_float")]
+        tick_size: String,
     },
     #[serde(rename = "LOT_SIZE")]
     #[serde(rename_all = "camelCase")]
     LotSize {
-        #[serde(with = "string_or_float")]
-        min_qty: f64,
-        #[serde(with = "string_or_float")]
-        max_qty: f64,
-        #[serde(with = "string_or_float")]
-        step_size: f64,
+        // #[serde(with = "string_or_float")]
+        min_qty: String,
+        // #[serde(with = "string_or_float")]
+        max_qty: String,
+        // #[serde(with = "string_or_float")]
+        step_size: String,
     },
     #[serde(rename = "MARKET_LOT_SIZE")]
     #[serde(rename_all = "camelCase")]
@@ -147,18 +147,18 @@ pub enum Filters {
     #[serde(rename = "MIN_NOTIONAL")]
     #[serde(rename_all = "camelCase")]
     MinNotional {
-        #[serde(with = "string_or_float")]
-        notional: f64,
+        // #[serde(with = "string_or_float")]
+        notional: String,
     },
     #[serde(rename = "PERCENT_PRICE")]
     #[serde(rename_all = "camelCase")]
     PercentPrice {
-        #[serde(with = "string_or_float")]
-        multiplier_up: f64,
-        #[serde(with = "string_or_float")]
-        multiplier_down: f64,
-        #[serde(with = "string_or_float")]
-        multiplier_decimal: f64,
+        // #[serde(with = "string_or_float")]
+        multiplier_up: String,
+        // #[serde(with = "string_or_float")]
+        multiplier_down: String,
+        // #[serde(with = "string_or_float")]
+        multiplier_decimal: String,
     },
     #[serde(other)]
     Others,
@@ -666,4 +666,12 @@ pub struct SymbolBrackets {
     pub symbol: String,
     pub notional_coef: Option<f64>,
     pub brackets: Vec<LeverageBracket>,
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum OrderResponse {
+    Ack,
+    Result
 }

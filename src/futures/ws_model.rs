@@ -1,14 +1,112 @@
+use crate::rest_model::string_or_u64;
 use crate::futures::rest_model::{MarginType, OrderType, PositionSide, WorkingType};
 use crate::rest_model::{string_or_float, string_or_float_opt, ExecutionType, OrderSide, OrderStatus, TimeInForce};
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE", tag = "e")]
 pub enum WebsocketEvent {
+    #[serde(rename = "ACCOUNT_UPDATE")]
     AccountUpdate(Box<AccountUpdate>),
     OrderTradeUpdate(Box<OrderTradeUpdate>),
+    #[serde(rename = "TRADE_LITE")]
+    TradeLite(Box<TradeLite>),
+
+    #[serde(rename = "bookTicker")]
+    BookTicker(Box<BookTicker>),
+    #[serde(rename = "trade")]
+    Trade(Box<Trade>),
 }
 
-#[derive(Debug, Deserialize)]
+/// Book ticker event [Reference](https://developers.binance.com/docs/derivatives/usds-margined-futures/websocket-market-streams/Individual-Symbol-Book-Ticker-Streams)
+///
+/// example:
+/// ```json
+/// {
+///   "e":"bookTicker",			// event type
+///   "u":400900217,     		// order book updateId
+///   "E": 1568014460893,  		// event time
+///   "T": 1568014460891,  		// transaction time
+///   "s":"BNBUSDT",     		// symbol
+///   "b":"25.35190000", 		// best bid price
+///   "B":"31.21000000", 		// best bid qty
+///   "a":"25.36520000", 		// best ask price
+///   "A":"40.66000000"  		// best ask qty
+/// }
+/// ```
+///
+///
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BookTicker {
+    #[serde(rename = "u", with = "string_or_u64")]
+    pub update_id: u64,
+    #[serde(rename = "E", with = "string_or_u64")]
+    pub event_time: u64,
+    #[serde(rename = "T", with = "string_or_u64")]
+    pub transaction_time: u64,
+    #[serde(rename = "s")]
+    pub symbol: String,
+    #[serde(rename = "b", with = "string_or_float")]
+    pub best_bid_price: f64,
+    #[serde(rename = "B", with = "string_or_float")]
+    pub best_bid_qty: f64,
+    #[serde(rename = "a", with = "string_or_float")]
+    pub best_ask_price: f64,
+    #[serde(rename = "A", with = "string_or_float")]
+    pub best_ask_qty: f64,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Trade {
+    #[serde(rename = "E", with = "string_or_u64")]
+    pub event_time: u64,
+    #[serde(rename = "T", with = "string_or_u64")]
+    pub transaction_time: u64,
+    #[serde(rename = "s")]
+    pub symbol: String,
+    #[serde(rename = "t", with = "string_or_u64")]
+    pub trade_id: u64,
+    #[serde(rename = "p", with = "string_or_float")]
+    pub price: f64,
+    #[serde(rename = "q", with = "string_or_float")]
+    pub quantity: f64,
+    #[serde(rename = "X")]
+    pub order_type: String,  // Renamed from execution_type to be more descriptive
+    #[serde(rename = "m")]
+    pub is_maker_side: bool,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TradeLite {
+    #[serde(rename = "E")]
+    pub event_time: u64,
+    #[serde(rename = "T", with = "string_or_u64")]
+    pub transaction_time: u64,
+    #[serde(rename = "s")]
+    pub symbol: String,
+    #[serde(rename = "q", with = "string_or_float")]
+    pub original_quantity: f64,
+    #[serde(rename = "p", with = "string_or_float")]
+    pub original_price: f64,
+    #[serde(rename = "m")]
+    pub is_maker_side: bool,
+    #[serde(rename = "c")]
+    pub client_order_id: String,
+    #[serde(rename = "S")]
+    pub side: OrderSide,
+    #[serde(rename = "L", with = "string_or_float")]
+    pub last_filled_price: f64,
+    #[serde(rename = "l", with = "string_or_float")]
+    pub order_last_filled_quantity: f64,
+    #[serde(rename = "t", with = "string_or_u64")]
+    pub trade_id: u64,
+    #[serde(rename = "i", with = "string_or_u64")]
+    pub order_id: u64,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AccountUpdate {
     #[serde(rename = "E")]
     pub event_time: u64,
@@ -18,7 +116,7 @@ pub struct AccountUpdate {
     pub account: Account,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Account {
     #[serde(rename = "m")]
     pub reason_type: ReasonType,
@@ -28,7 +126,7 @@ pub struct Account {
     pub positions: Vec<Position>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ReasonType {
     Deposit,
@@ -50,7 +148,7 @@ pub enum ReasonType {
     CoinSwapWithdraw,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Balance {
     #[serde(rename = "a")]
     pub asset: String,
@@ -62,7 +160,7 @@ pub struct Balance {
     pub balance_change: f64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Position {
     #[serde(rename = "s")]
     pub symbol: String,
@@ -84,7 +182,7 @@ pub struct Position {
     pub position_side: PositionSide,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct OrderTradeUpdate {
     #[serde(rename = "E")]
     pub event_time: u64,
@@ -94,7 +192,7 @@ pub struct OrderTradeUpdate {
     pub order: Order,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Order {
     #[serde(rename = "s")]
     pub symbol: String,
@@ -166,7 +264,7 @@ pub struct Order {
     pub good_till_date: u64,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PriceMatch {
     /// No price match
@@ -189,7 +287,7 @@ pub enum PriceMatch {
     Queue20,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SelfTradePreventionMode {
     /// No Self-Trade Prevention
@@ -200,4 +298,71 @@ pub enum SelfTradePreventionMode {
     ExpireBoth,
     /// Expire maker order when STP trigger
     ExpireMaker,
+}
+
+#[derive(thiserror::Error, Debug)]
+enum ParseError {
+    #[error("JSON parsing error: {0}")]
+    SerdeError(#[from] serde_json::Error),
+
+    #[error("Unknown event type: {0}")]
+    UnknownEventType(String),
+    // Add other potential error types here
+}
+
+
+
+fn parse_event(event_str: &str) -> Result<WebsocketEvent, ParseError> {
+    // First, try to deserialize into the generic BinanceEvent enum.
+    let event: WebsocketEvent = serde_json::from_str(event_str)?;
+    Ok(event)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_parse_event() {
+        let book_ticker_str = r#"{"e":"bookTicker","u":7081766043288,"s":"BTCUSDT","b":"84158.30","B":"6.454","a":"84158.40","A":"9.533","T":1742582931601,"E":1742582931601}"#;
+        let trade_str = r#"{"e":"trade","E":1742583237873,"T":1742583237873,"s":"BTCUSDT","t":6126585299,"p":"84088.00","q":"0.002","X":"MARKET","m":false}"#;
+        let order_trade_update_new = r#"{"e":"ORDER_TRADE_UPDATE","T":1742584483137,"E":1742584483137,"o":{"s":"BTCUSDT","c":"BG1gnPa6hrGgKVYZFOAvAu","S":"BUY","o":"LIMIT","f":"GTC","q":"1","p":"50000","ap":"0","sp":"0","x":"NEW","X":"NEW","i":4129466756,"l":"0","z":"0","L":"0","n":"0","N":"USDT","T":1742584483137,"t":0,"b":"50000","a":"0","m":false,"R":false,"wt":"CONTRACT_PRICE","ot":"LIMIT","ps":"BOTH","cp":false,"rp":"0","pP":false,"si":0,"ss":0,"V":"EXPIRE_MAKER","pm":"NONE","gtd":0}}"#;
+        let trade_lite = r#" {"e":"TRADE_LITE","E":1742585119595,"T":1742585119595,"s":"BTCUSDT","q":"0.100","p":"0.00","m":false,"c":"KWsJ1UBaWM1C0IhvgdXxZb","S":"BUY","L":"84146.50","l":"0.100","t":310194316,"i":4129479931}"#;
+        let order_trade_update_filled = r#"{"e":"ORDER_TRADE_UPDATE","T":1742585119595,"E":1742585119596,"o":{"s":"BTCUSDT","c":"KWsJ1UBaWM1C0IhvgdXxZb","S":"BUY","o":"MARKET","f":"GTC","q":"0.100","p":"0","ap":"84146.50000","sp":"0","x":"TRADE","X":"FILLED","i":4129479931,"l":"0.100","z":"0.100","L":"84146.50","n":"3.36586000","N":"USDT","T":1742585119595,"t":310194316,"b":"0","a":"0","m":false,"R":false,"wt":"CONTRACT_PRICE","ot":"MARKET","ps":"BOTH","cp":false,"rp":"0","pP":false,"si":0,"ss":0,"V":"EXPIRE_MAKER","pm":"NONE","gtd":0}}"#;
+        let account_update = r#"{"e":"ACCOUNT_UPDATE","T":1742585119595,"E":1742585119596,"a":{"B":[{"a":"USDT","wb":"15237.42937172","cw":"15237.42937172","bc":"0"}],"P":[{"s":"BTCUSDT","pa":"0.100","ep":"84146.5","cr":"123.98240000","up":"0.40867555","mt":"cross","iw":"0","ps":"BOTH","ma":"USDT","bep":"84180.1586"}],"m":"ORDER"}}"#;
+
+        let event_str_vec = vec![
+            book_ticker_str,
+            trade_str,
+            order_trade_update_new,
+            order_trade_update_filled,
+            trade_lite,
+            account_update,
+        ];
+
+        for s in event_str_vec {
+            println!("src: {s}");
+            let event = parse_event(s).unwrap();
+            match event {
+                WebsocketEvent::BookTicker(bookTicker) => {
+                    println!("Parsed: {:?}", bookTicker);
+                }
+                WebsocketEvent::Trade(trade) => {
+                    println!("Parsed: {:?}", trade);
+                }
+                WebsocketEvent::OrderTradeUpdate(order_trade_update) => {
+                    println!("Parsed: {:?}", order_trade_update);
+                }
+                WebsocketEvent::TradeLite(trade_lite) => {
+                    println!("Parsed: {:?}", trade_lite);
+                }
+                WebsocketEvent::AccountUpdate(account_update) => {
+                    println!("Parsed: {:?}", account_update);
+                }
+                _ => {
+                    panic!("Unexpected event type: {:?}", event);
+                }
+            }
+        }
+    }
 }
