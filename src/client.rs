@@ -1,5 +1,8 @@
 use std::time::Duration;
 
+use crate::errors::error_messages;
+use crate::errors::*;
+use crate::util::{build_request_p, build_signed_request_p};
 use hex::encode as hex_encode;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, CONTENT_TYPE, USER_AGENT};
 use reqwest::Response;
@@ -7,10 +10,7 @@ use reqwest::StatusCode;
 use ring::hmac;
 use serde::de;
 use serde::de::DeserializeOwned;
-
-use crate::errors::error_messages;
-use crate::errors::*;
-use crate::util::{build_request_p, build_signed_request_p};
+use tracing::info;
 
 #[derive(Clone)]
 pub struct Client {
@@ -40,6 +40,7 @@ impl Client {
 
     pub async fn get_signed<T: DeserializeOwned>(&self, endpoint: &str, request: &str) -> Result<T> {
         let url = self.sign_request(endpoint, request);
+        info!("get_signed url: {}", url);
         let response = self.inner.get(&url).headers(self.build_headers(true)?).send().await?;
 
         self.handler(response).await
@@ -61,6 +62,7 @@ impl Client {
 
     pub async fn post_signed<T: DeserializeOwned>(&self, endpoint: &str, request: &str) -> Result<T> {
         let url = self.sign_request(endpoint, request);
+        info!("post_signed url: {}", url);
         let response = self.inner.post(&url).headers(self.build_headers(true)?).send().await?;
 
         self.handler(response).await

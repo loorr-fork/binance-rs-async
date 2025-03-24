@@ -1,9 +1,11 @@
 use std::collections::BTreeMap;
 
-use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order, OrderResponse, OrderType, Position, PositionSide, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order,
+                        OrderResponse, OrderType, Position, PositionSide, PositionV3, Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
+use crate::futures::ws_model::PriceMatch;
 use crate::rest_model::{OrderSide, TimeInForce};
 use crate::rest_model::{PairAndWindowQuery, PairQuery};
 use crate::util::*;
@@ -69,6 +71,7 @@ pub struct OrderRequest {
     pub price_protect: Option<bool>,
     pub new_client_order_id: Option<String>,
     pub new_order_resp_type: Option<OrderResponse>,
+    pub price_match: Option<PriceMatch>,
 }
 
 #[derive(Serialize)]
@@ -131,7 +134,8 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
             new_client_order_id,
-            new_order_resp_type: Some(OrderResponse::Ack)
+            new_order_resp_type: Some(OrderResponse::Ack),
+            price_match: None,
         };
         self.place_order(order).await
     }
@@ -161,7 +165,8 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
             new_client_order_id,
-            new_order_resp_type: Some(OrderResponse::Ack)
+            new_order_resp_type: Some(OrderResponse::Ack),
+            price_match: None,
         };
         self.place_order(order).await
     }
@@ -188,7 +193,8 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
             new_client_order_id: None,
-            new_order_resp_type: Some(OrderResponse::Result)
+            new_order_resp_type: Some(OrderResponse::Result),
+            price_match: None,
         };
         self.place_order(order).await
     }
@@ -215,7 +221,8 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
             new_client_order_id: None,
-            new_order_resp_type: Some(OrderResponse::Result)
+            new_order_resp_type: Some(OrderResponse::Result),
+            price_match: None,
         };
         self.place_order(order).await
     }
@@ -234,6 +241,22 @@ impl FuturesAccount {
         self.client
             .get_signed_p(
                 "/fapi/v2/positionRisk",
+                Some(PairAndWindowQuery {
+                    symbol: symbol.into(),
+                    recv_window: self.recv_window,
+                }),
+                self.recv_window,
+            )
+            .await
+    }
+
+    pub async fn position_information_v3<S>(&self, symbol: S) -> Result<Vec<PositionV3>>
+    where
+        S: Into<String>,
+    {
+        self.client
+            .get_signed_p(
+                "/fapi/v3/positionRisk",
                 Some(PairAndWindowQuery {
                     symbol: symbol.into(),
                     recv_window: self.recv_window,
@@ -295,5 +318,38 @@ impl FuturesAccount {
             )
             .await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::api::Binance;
+    use crate::futures::account::FuturesAccount;
+    use std::sync::Arc;
+
+    fn init_client() -> Arc<FuturesAccount> {
+        let mut config = crate::config::Config::testnet();
+        config.recv_window = 1_000_000;
+        let api_key = "3ec340c3bf6399c711d2b0e34f8cefff48c2aed984c7c5157c813810a027ee45";
+        let secret_key = "559052c703589a3f5259395c240c524a3bc7d98cac89f9c3d0e54f1ba5a48477";
+        Arc::new(FuturesAccount::new_with_config(
+            Some(api_key.to_string()),
+            Some(secret_key.to_string()),
+            &config,
+        ))
+    }
+    #[tokio::test]
+    pub async fn test_position_information_v3() {
+        let future_account_api = init_client();
+        let symbol = "ETHUSDT";
+        match future_account_api.position_information_v3(symbol).await {
+            Ok(positions) => {
+                // 打印json, 格式化打印
+                println!("{:#?}", positions);
+            }
+            Err(e) => {
+                println!("{:?}", e);
+            }
+        }
     }
 }

@@ -39,6 +39,7 @@ thiserror = "1.0"
 url = "2.5"
 tokio-tungstenite = "0.21"
 tokio = { version = "1.37", default-features = false, features = ["net", "sync"] }
+tracing = { version = "0.1", features = ["release_max_level_debug", "log"] }
 
 [dev-dependencies]
 csv = "1.3"

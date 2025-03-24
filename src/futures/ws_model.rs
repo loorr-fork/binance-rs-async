@@ -1,5 +1,5 @@
-use crate::rest_model::string_or_u64;
 use crate::futures::rest_model::{MarginType, OrderType, PositionSide, WorkingType};
+use crate::rest_model::string_or_u64;
 use crate::rest_model::{string_or_float, string_or_float_opt, ExecutionType, OrderSide, OrderStatus, TimeInForce};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -72,7 +72,7 @@ pub struct Trade {
     #[serde(rename = "q", with = "string_or_float")]
     pub quantity: f64,
     #[serde(rename = "X")]
-    pub order_type: String,  // Renamed from execution_type to be more descriptive
+    pub order_type: String, // Renamed from execution_type to be more descriptive
     #[serde(rename = "m")]
     pub is_maker_side: bool,
 }
@@ -309,8 +309,6 @@ enum ParseError {
     UnknownEventType(String),
     // Add other potential error types here
 }
-
-
 
 fn parse_event(event_str: &str) -> Result<WebsocketEvent, ParseError> {
     // First, try to deserialize into the generic BinanceEvent enum.

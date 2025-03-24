@@ -422,6 +422,38 @@ pub struct CanceledOrder {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct PositionV3 {
+    pub symbol: String,
+    pub position_side: PositionSide,
+    pub position_amt: String,
+    ///
+    pub entry_price: String,
+    /// 未实现盈亏恰好为零的价格。这通常包括了交易手续费。它比 entryPrice 略高，就是因为手续费
+    pub break_even_price: String,
+    pub mark_price: String,
+    pub un_realized_profit: String,
+    pub liquidation_price: String,
+    pub isolated_margin: String,
+    pub notional: String,
+    pub margin_asset: String,
+    pub isolated_wallet: String,
+    /// 开仓时最初需要的保证金金额
+    pub initial_margin: String,
+    /// 维持保证金要求。这是你必须维持以保持仓位开放的最低保证金金额
+    pub maint_margin: String,
+    pub position_initial_margin: String,
+    pub open_order_initial_margin: String,
+    //  integer, not a float
+    pub adl: i32,
+    //  though 0, could be a float in other cases
+    pub bid_notional: String,
+    //  though 0, could be a float in other cases
+    pub ask_notional: String,
+    pub update_time: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Position {
     #[serde(with = "string_or_float")]
     pub entry_price: f64,
@@ -668,10 +700,9 @@ pub struct SymbolBrackets {
     pub brackets: Vec<LeverageBracket>,
 }
 
-
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderResponse {
     Ack,
-    Result
+    Result,
 }
