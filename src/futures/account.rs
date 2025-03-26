@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
-use super::rest_model::{AccountBalance, AccountInformation, CanceledOrder, ChangeLeverageResponse, Order,
-                        OrderResponse, OrderType, Position, PositionSide, PositionV3, Transaction, WorkingType};
+use super::rest_model::{AccountBalance, AccountInformation, CancelAllOpenOrdersResponse, CanceledOrder,
+                        ChangeLeverageResponse, Order, OrderResponse, OrderType, Position, PositionSide, PositionV3,
+                        Transaction, WorkingType};
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
@@ -306,7 +307,7 @@ impl FuturesAccount {
     }
 
     /// Cancel all open orders on this symbol
-    pub async fn cancel_all_open_orders<S>(&self, symbol: S) -> Result<()>
+    pub async fn cancel_all_open_orders<S>(&self, symbol: S) -> Result<CancelAllOpenOrdersResponse>
     where
         S: Into<String>,
     {
@@ -316,8 +317,7 @@ impl FuturesAccount {
                 PairQuery { symbol: symbol.into() },
                 self.recv_window,
             )
-            .await?;
-        Ok(())
+            .await
     }
 }
 
@@ -346,6 +346,27 @@ mod test {
             Ok(positions) => {
                 // 打印json, 格式化打印
                 println!("{:#?}", positions);
+            }
+            Err(e) => {
+                println!("{:?}", e);
+            }
+        }
+    }
+
+    // pub async fn cancel_all_open_orders(&self, symbol: &String) -> Result<(), String> {
+    //     let client = &self.binance_api.account_api_client;
+    //     match client.cancel_all_open_orders(symbol).await {
+    //         Ok(_) => Ok(()),
+    //         Err(err) => Err(err.to_string()),
+    //     }
+    // }
+    #[tokio::test]
+    pub async fn test_close_all_open_orders() {
+        let future_account_api = init_client();
+        let symbol = "ETHUSDT";
+        match future_account_api.cancel_all_open_orders(symbol).await {
+            Ok(mgs) => {
+                println!("cancel all open orders success: {:#?}", mgs);
             }
             Err(e) => {
                 println!("{:?}", e);
